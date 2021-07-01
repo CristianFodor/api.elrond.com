@@ -2,7 +2,7 @@ import { Body, Controller, HttpStatus, Post, Res } from "@nestjs/common";
 import { ApiResponse, ApiTags } from "@nestjs/swagger";
 import { VmQueryRequest } from "./entities/vm.query.request";
 import { VmQueryService } from "./vm.query.service";
-import { Response } from 'express';
+import * as fastify from 'fastify';
 
 @Controller()
 @ApiTags('query')
@@ -16,20 +16,20 @@ export class VmQueryController {
     status: 201,
     description: 'Returns the result of the query',
   })
-  async query(@Body() query: VmQueryRequest, @Res() res: Response) {
+  async query(@Body() query: VmQueryRequest, @Res() res: fastify.FastifyReply) {
     let result: any;
     try {
       result = await this.vmQueryService.vmQueryFullResult(query.scAddress, query.funcName, query.caller, query.args);
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json({statusCode: HttpStatus.BAD_REQUEST, code: error.response.data.code, message: error.response.data.error}).send();
+      res.status(HttpStatus.BAD_REQUEST).send({statusCode: HttpStatus.BAD_REQUEST, code: error.response.data.code, message: error.response.data.error});
       return;
     }
 
     let data = result.data.data;
     if (data.returnData !== null) {
-      res.status(HttpStatus.OK).json(data);
+      res.status(HttpStatus.OK).send(data);
     } else {
-      res.status(HttpStatus.BAD_REQUEST).json({statusCode: HttpStatus.BAD_REQUEST, code: data.returnCode, message: data.returnMessage}).send();
+      res.status(HttpStatus.BAD_REQUEST).send({statusCode: HttpStatus.BAD_REQUEST, code: data.returnCode, message: data.returnMessage});
     }
   }
 } 

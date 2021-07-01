@@ -19,9 +19,10 @@ import { Logger } from '@nestjs/common';
 import * as bodyParser from 'body-parser';
 import * as requestIp from 'request-ip';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
+import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 
 async function bootstrap() {
-  const publicApp = await NestFactory.create(PublicAppModule);
+  const publicApp = await NestFactory.create<NestFastifyApplication>(PublicAppModule, new FastifyAdapter());
   publicApp.use(bodyParser.json({limit: '1mb'}));
   publicApp.use(requestIp.mw());
   publicApp.enableCors();
@@ -54,10 +55,10 @@ async function bootstrap() {
 
   const document = SwaggerModule.createDocument(publicApp, config);
   SwaggerModule.setup('docs', publicApp, document);
-  SwaggerModule.setup('', publicApp, document);
+  SwaggerModule.setup('/', publicApp, document);
 
   if (apiConfigService.getIsPublicApiActive()) {
-    await publicApp.listen(3001);
+    await publicApp.listen(3001, '0.0.0.0');
   }
 
   if (apiConfigService.getIsPrivateApiActive()) {

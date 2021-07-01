@@ -1,7 +1,7 @@
 import { Body, Controller, Get, HttpStatus, Param, Post, Query, Res } from "@nestjs/common";
 import { ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { GatewayService } from "src/helpers/gateway.service";
-import { Response } from 'express';
+import * as fastify from 'fastify';
 import { VmQueryRequest } from "../vm.query/entities/vm.query.request";
 import { VmQueryService } from "../vm.query/vm.query.service";
 
@@ -14,62 +14,62 @@ export class ProxyController {
   ) {}
 
   @Get('/address/:address')
-  async getAddress(@Res() res: Response, @Param('address') address: string) {
+  async getAddress(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}`);
   }
 
   @Get('/address/:address/balance')
-  async getAddressBalance(@Res() res: Response, @Param('address') address: string) {
+  async getAddressBalance(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}/balance`);
   }
 
   @Get('/address/:address/nonce')
-  async getAddressNonce(@Res() res: Response, @Param('address') address: string) {
+  async getAddressNonce(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}/nonce`);
   }
 
   @Get('/address/:address/shard')
-  async getAddressShard(@Res() res: Response, @Param('address') address: string) {
+  async getAddressShard(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}/shard`);
   }
 
   @Get('/address/:address/storage/:key')
-  async getAddressStorageKey(@Res() res: Response, @Param('address') address: string, @Param('key') key: string) {
+  async getAddressStorageKey(@Res() res: fastify.FastifyReply, @Param('address') address: string, @Param('key') key: string) {
     await this.gatewayGet(res, `address/${address}/storage/${key}`);
   }
 
   @Get('/address/:address/transactions')
-  async getAddressTransactions(@Res() res: Response, @Param('address') address: string) {
+  async getAddressTransactions(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}/transactions`);
   }
 
   @Get('/address/:address/esdt')
-  async getAddressEsdt(@Res() res: Response, @Param('address') address: string) {
+  async getAddressEsdt(@Res() res: fastify.FastifyReply, @Param('address') address: string) {
     await this.gatewayGet(res, `address/${address}/esdt`);
   }
 
   @Post('/transaction/send')
-  async transactionSend(@Res() res: Response, @Body() body: any) {
+  async transactionSend(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'transaction/send', body);
   }
 
   @Post('/transaction/simulate')
-  async transactionSimulate(@Res() res: Response, @Body() body: any) {
+  async transactionSimulate(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'transaction/simulate', body);
   }
 
   @Post('/transaction/send-multiple')
-  async transactionSendMultiple(@Res() res: Response, @Body() body: any) {
+  async transactionSendMultiple(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'transaction/send-multiple', body);
   }
 
   @Post('/transaction/send-user-funds')
-  async transactionSendUserFunds(@Res() res: Response, @Body() body: any) {
+  async transactionSendUserFunds(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'transaction/send-user-funds', body);
   }
 
   @Post('/transaction/cost')
-  async transactionCost(@Res() res: Response, @Body() body: any) {
+  async transactionCost(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'transaction/cost', body);
   }
 
@@ -77,7 +77,7 @@ export class ProxyController {
   @ApiQuery({ name: 'sender', description: 'Sender', required: false })
   @ApiQuery({ name: 'withResults', description: 'Include results which correspond to the hash', required: false })
   async getTransaction(
-    @Res() res: Response, 
+    @Res() res: fastify.FastifyReply, 
     @Param('hash') hash: string,
     @Query('sender') sender: string | undefined,
     @Query('withResults') withResults: string | undefined,
@@ -88,7 +88,7 @@ export class ProxyController {
   @Get('/transaction/:hash/status')
   @ApiQuery({ name: 'sender', description: 'Sender', required: false })
   async getTransactionStatus(
-    @Res() res: Response, 
+    @Res() res: fastify.FastifyReply, 
     @Param('hash') hash: string,
     @Query('sender') sender: string,
   ) {
@@ -96,17 +96,17 @@ export class ProxyController {
   }
 
   @Post('/vm-values/hex')
-  async vmValuesHex(@Res() res: Response, @Body() body: any) {
+  async vmValuesHex(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'vm-values/hex', body);
   }
 
   @Post('/vm-values/string')
-  async vmValuesString(@Res() res: Response, @Body() body: any) {
+  async vmValuesString(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'vm-values/string', body);
   }
 
   @Post('/vm-values/int')
-  async vmValuesInt(@Res() res: Response, @Body() body: any) {
+  async vmValuesInt(@Res() res: fastify.FastifyReply, @Body() body: any) {
     await this.gatewayPost(res, 'vm-values/int', body);
   }
 
@@ -115,49 +115,49 @@ export class ProxyController {
     status: 201,
     description: 'Returns the result of the query (legacy)',
   })
-  async queryLegacy(@Body() query: VmQueryRequest, @Res() res: Response) {
+  async queryLegacy(@Body() query: VmQueryRequest, @Res() res: fastify.FastifyReply) {
     try {
       let result = await this.vmQueryService.vmQueryFullResult(query.scAddress, query.funcName, query.caller, query.args);
-      res.status(HttpStatus.OK).json(result).send();
+      res.status(HttpStatus.OK).send(result);
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json(error.response.data).send();
+      res.status(HttpStatus.BAD_REQUEST).send(error.response.data);
     }
   }
 
   @Get('/network/status/:shard')
-  async getNetworkStatusShard(@Res() res: Response, @Param('shard') shard: string) {
+  async getNetworkStatusShard(@Res() res: fastify.FastifyReply, @Param('shard') shard: string) {
     await this.gatewayGet(res, `network/status/${shard}`);
   }
 
   @Get('/network/config')
-  async getNetworkConfig(@Res() res: Response) {
+  async getNetworkConfig(@Res() res: fastify.FastifyReply) {
     await this.gatewayGet(res, 'network/config');
   }
 
   @Get('/network/economics')
-  async getNetworkEconomics(@Res() res: Response) {
+  async getNetworkEconomics(@Res() res: fastify.FastifyReply) {
     await this.gatewayGet(res, 'network/economics');
   }
 
   @Get('/network/total-staked')
-  async getNetworkTotalStaked(@Res() res: Response) {
+  async getNetworkTotalStaked(@Res() res: fastify.FastifyReply) {
     await this.gatewayGet(res, 'network/total-staked');
   }
 
   @Get('/node/heartbeatstatus')
-  async getNodeHeartbeatStatus(@Res() res: Response) {
+  async getNodeHeartbeatStatus(@Res() res: fastify.FastifyReply) {
     await this.gatewayGet(res, 'node/heartbeatstatus');
   }
 
-  @Get('/validator/statistics')
-  async getValidatorStatistics(@Res() res: Response) {
-    await this.gatewayGet(res, 'validator/statistics');
-  }
+  // @Get('/validator/statistics')
+  // async getValidatorStatistics(@Res() res: fastify.FastifyReply) {
+  //   await this.gatewayGet(res, 'validator/statistics');
+  // }
 
   @Get('/block/:shard/by-nonce/:nonce')
   @ApiQuery({ name: 'withTxs', description: 'Include transactions', required: false })
   async getBlockByShardAndNonce(
-    @Res() res: Response, 
+    @Res() res: fastify.FastifyReply, 
     @Param('shard') shard: string,
     @Param('nonce') nonce: number,
     @Query('withTxs') withTxs: string | undefined,
@@ -168,7 +168,7 @@ export class ProxyController {
   @Get('/block/:shard/by-hash/:hash')
   @ApiQuery({ name: 'withTxs', description: 'Include transactions', required: false })
   async getBlockByShardAndHash(
-    @Res() res: Response, 
+    @Res() res: fastify.FastifyReply, 
     @Param('shard') shard: string,
     @Param('hash') hash: number,
     @Query('withTxs') withTxs: string | undefined,
@@ -178,7 +178,7 @@ export class ProxyController {
 
   @Get('/block-atlas/:shard/:nonce')
   async getBlockAtlas(
-    @Res() res: Response, 
+    @Res() res: fastify.FastifyReply, 
     @Param('shard') shard: string,
     @Param('nonce') nonce: number,
   ) {
@@ -186,34 +186,34 @@ export class ProxyController {
   }
 
   @Get('/hyperblock/by-nonce/:nonce')
-  async getHyperblockByNonce(@Res() res: Response, @Param('nonce') nonce: number) {
+  async getHyperblockByNonce(@Res() res: fastify.FastifyReply, @Param('nonce') nonce: number) {
     await this.gatewayGet(res, `hyperblock/by-nonce/${nonce}`);
   }
 
   @Get('/hyperblock/by-hash/:hash')
-  async getHyperblockByHash(@Res() res: Response, @Param('hash') hash: number) {
+  async getHyperblockByHash(@Res() res: fastify.FastifyReply, @Param('hash') hash: number) {
     await this.gatewayGet(res, `hyperblock/by-hash/${hash}`);
   }
 
-  private async gatewayGet(@Res() res: Response, url: string, params: any = undefined) {
+  private async gatewayGet(@Res() res: fastify.FastifyReply, url: string, params: any = undefined) {
     if (params) {
       url += '?' + Object.keys(params).filter(key => params[key] !== undefined).map(key => `${key}=${params[key]}`).join('&')
     }
 
     try {
       let result = await this.gatewayService.getRaw(url);
-      res.json(result.data);
+      res.send(result.data);
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json(error.response.data).send();
+      res.status(HttpStatus.BAD_REQUEST).send(error.response.data);
     }
   }
 
-  private async gatewayPost(@Res() res: Response, url: string, data: any) {
+  private async gatewayPost(@Res() res: fastify.FastifyReply, url: string, data: any) {
     try {
       let result = await this.gatewayService.createRaw(url, data);
-      res.json(result.data);
+      res.send(result.data);
     } catch (error) {
-      res.status(HttpStatus.BAD_REQUEST).json(error.response.data).send();
+      res.status(HttpStatus.BAD_REQUEST).send(error.response.data);
     }
   }
 }
