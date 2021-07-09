@@ -34,6 +34,65 @@ export class CachingService {
           }
         ]
       }
+    ],
+    'erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqz8llllsh6u4jp': [
+      {
+        funcName: 'getContractConfig',
+        invalidations: [
+          {
+            funcName: 'changeServiceFee',
+            args: []
+          },
+          {
+            funcName: 'modifyTotalDelegationCap',
+            args: []
+          }
+        ]
+      },
+      {
+        funcName: 'getMetaData',
+        invalidations: [
+          {
+            funcName: 'setMetaData',
+            args: []
+          }
+        ]
+      },
+      {
+        funcName: 'getTotalActiveStake',
+        invalidations: [
+          {
+            funcName: '*',
+            args: []
+          }
+        ]
+      },
+      {
+        funcName: 'getTotalUnStaked',
+        invalidations: [
+          {
+            funcName: '*',
+            args: []
+          }
+        ]
+      },
+      {
+        funcName: 'getTotalCumulatedRewards@epoch',
+        invalidations: []
+      },
+      {
+        funcName: 'getNumUsers',
+        invalidations: [
+          {
+            funcName: 'delegate',
+            args: []
+          },
+          {
+            funcName: 'unDelegate',
+            args: []
+          },
+        ]
+      },
     ]
     // 'erd1qqqqqqqqqqqqqpgqta8u7qyngjttwu9cmh7uvskaentglrqlerms7a3gys': [
     //   { 
