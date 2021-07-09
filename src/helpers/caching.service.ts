@@ -24,6 +24,17 @@ export class CachingService {
   };
     
   caching: { [key: string] : CachedFunction[] } = {
+    'erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllslmq6y6': [
+      {
+        funcName: 'getAllContractAddresses',
+        invalidations: [
+          {
+            funcName: '*',
+            args: []
+          }
+        ]
+      }
+    ]
     // 'erd1qqqqqqqqqqqqqpgqta8u7qyngjttwu9cmh7uvskaentglrqlerms7a3gys': [
     //   { 
     //     funcName: 'getQuorum', 
