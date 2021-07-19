@@ -10,10 +10,11 @@ import { bech32Decode, bech32Encode, oneHour, oneMinute, oneWeek } from "src/hel
 import { CachingService } from "src/helpers/caching.service";
 import { KeybaseService } from "src/helpers/keybase.service";
 import { Keybase } from "src/helpers/entities/keybase";
-import { NodeQuery } from "./entities/node.query";
+import { NodeFilter } from "./entities/node.filter";
 import { ProviderService } from "../providers/provider.service";
 import { StakeService } from "../stake/stake.service";
 import { SortOrder } from "src/helpers/entities/sort.order";
+import { QueryPagination } from "src/common/entities/query.pagination";
 
 @Injectable()
 export class NodeService {
@@ -51,7 +52,7 @@ export class NodeService {
     return allNodes.find(x => x.bls === bls);
   }
 
-  async getNodeCount(query: NodeQuery): Promise<number> {
+  async getNodeCount(query: NodeFilter): Promise<number> {
     let allNodes = await this.getFilteredNodes(query);
     return allNodes.length;
   }
@@ -84,7 +85,7 @@ export class NodeService {
       return data;
   }
 
-  private async getFilteredNodes(query: NodeQuery): Promise<Node[]> {
+  private async getFilteredNodes(query: NodeFilter): Promise<Node[]> {
     let allNodes = await this.getAllNodes();
 
     let filteredNodes = allNodes.filter(node => {
@@ -157,7 +158,9 @@ export class NodeService {
     return filteredNodes;
   }
 
-  async getNodes(from: number, size: number, query: NodeQuery): Promise<Node[]> {
+  async getNodes(queryPagination: QueryPagination, query: NodeFilter): Promise<Node[]> {
+    const { from, size } = queryPagination;
+
     let filteredNodes = await this.getFilteredNodes(query);
 
     return filteredNodes.slice(from, from + size);
@@ -266,7 +269,7 @@ export class NodeService {
   }
 
   async getOwners(blses: string[], skipCache = false) {
-    const keys = blses.map((bls) => `${this.apiConfigService.getNetwork()}:owner:${bls}`);
+    const keys = blses.map((bls) => `owner:${bls}`);
 
     let cached: any[] = [];
     if (skipCache) {
@@ -299,7 +302,7 @@ export class NodeService {
       }
 
       const params = {
-        keys: Object.keys(owners).map((bls) => `${this.apiConfigService.getNetwork()}:owner:${bls}`),
+        keys: Object.keys(owners).map((bls) => `owner:${bls}`),
         values: Object.values(owners),
         ttls: new Array(Object.keys(owners).length).fill(60 * 60 * 24), // 24h
       };

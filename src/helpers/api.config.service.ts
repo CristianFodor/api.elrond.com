@@ -5,6 +5,15 @@ import { ConfigService } from "@nestjs/config";
 export class ApiConfigService {
   constructor(private readonly configService: ConfigService) {}
 
+  getApiUrls(): string[] {
+    const apiUrls = this.configService.get<string[]>('urls.api');
+    if (!apiUrls) {
+      throw new Error('No API urls present');
+    }
+
+    return apiUrls;
+  }
+
   getGatewayUrl(): string {
     const gatewayUrls = this.configService.get<string[]>('urls.gateway');
     if (!gatewayUrls) {
@@ -18,15 +27,6 @@ export class ApiConfigService {
     const elasticUrls = this.configService.get<string[]>('urls.elastic');
     if (!elasticUrls) {
       throw new Error('No elastic urls present');
-    }
-
-    return elasticUrls[Math.floor(Math.random() * elasticUrls.length)];
-  }
-
-  getElasticBetaUrl(): string {
-    const elasticUrls = this.configService.get<string[]>('urls.elasticBeta');
-    if (!elasticUrls) {
-      throw new Error('No elastic beta urls present');
     }
 
     return elasticUrls[Math.floor(Math.random() * elasticUrls.length)];
@@ -120,6 +120,14 @@ export class ApiConfigService {
     return this.configService.get<number>('caching.processTtl') ?? 60;
   }
 
+  getAxiosTimeout(): number {
+    return this.configService.get<number>('keepAliveTimeout.downstream') ?? 61000;
+  }
+
+  getServerTimeout(): number {
+    return this.configService.get<number>('keepAliveTimeout.upstream') ?? 60000;
+  }
+
   getProvidersUrl(): string {
     let providerUrl = this.configService.get<string>('urls.providers');
     if (!providerUrl) {
@@ -127,6 +135,24 @@ export class ApiConfigService {
     }
 
     return providerUrl;
+  }
+
+  getDataLatestCompleteUrl(): string {
+    let dataLatestCompleteUrl = this.configService.get<string>('urls.dataLatestCompleteUrl');
+    if (!dataLatestCompleteUrl) {
+      throw new Error('No dataLatestComplete url present');
+    }
+
+    return dataLatestCompleteUrl;
+  }
+
+  getDataLatestUrl(): string {
+    let dataLatestUrl = this.configService.get<string>('urls.dataLatestUrl');
+    if (!dataLatestUrl) {
+      throw new Error('No dataLatest url present');
+    }
+
+    return dataLatestUrl;
   }
 
   getCsrfSecret(): string {
@@ -190,5 +216,18 @@ export class ApiConfigService {
     }
 
     return metaChainShardId;
+  }
+
+  getUseLegacyElastic(): boolean {
+    let useLegacyElastic = this.configService.get<boolean>('useLegacyElastic');
+    if (useLegacyElastic === undefined) {
+      return false;
+    }
+
+    return useLegacyElastic;
+  }
+
+  getRateLimiterSecret(): string | undefined {
+    return this.configService.get<string>('rateLimiterSecret');
   }
 }

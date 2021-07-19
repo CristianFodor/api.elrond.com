@@ -1,5 +1,5 @@
 import { Body, Controller, DefaultValuePipe, Get, HttpException, HttpStatus, Param, ParseIntPipe, Post, Query } from '@nestjs/common';
-import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { QueryCondition } from 'src/helpers/entities/query.condition';
 import { ParseOptionalEnumPipe } from 'src/helpers/pipes/parse.optional.enum.pipe';
 import { ParseOptionalIntPipe } from 'src/helpers/pipes/parse.optional.int.pipe';
@@ -7,6 +7,7 @@ import { Transaction } from './entities/transaction';
 import { TransactionCreate } from './entities/transaction.create';
 import { TransactionDetailed } from './entities/transaction.detailed';
 import { TransactionSendResult } from './entities/transaction.send.result';
+import { TransactionStatus } from './entities/transaction.status';
 import { TransactionService } from './transaction.service';
 
 @Controller()
@@ -26,6 +27,7 @@ export class TransactionController {
   @ApiQuery({ name: 'senderShard', description: 'Id of the shard the sender address belongs to', required: false  })
   @ApiQuery({ name: 'receiverShard', description: 'Id of the shard the receiver address belongs to', required: false  })
   @ApiQuery({ name: 'miniBlockHash', description: 'Filter by miniblock hash', required: false  })
+  @ApiQuery({ name: 'status', description: 'Status of the transaction (success / pending / invalid)', required: false  })
   @ApiQuery({ name: 'condition', description: 'Condition type (should/must)', required: false  })
   @ApiQuery({ name: 'before', description: 'Before timestamp', required: false })
   @ApiQuery({ name: 'after', description: 'After timestamp', required: false })
@@ -37,18 +39,20 @@ export class TransactionController {
     @Query('senderShard', ParseOptionalIntPipe) senderShard: number | undefined, 
     @Query('receiverShard', ParseOptionalIntPipe) receiverShard: number | undefined, 
     @Query('miniBlockHash') miniBlockHash: string | undefined, 
+    @Query('status', new ParseOptionalEnumPipe(TransactionStatus)) status: TransactionStatus | undefined, 
     @Query('condition', new ParseOptionalEnumPipe(QueryCondition)) condition: QueryCondition | undefined, 
     @Query('before', ParseOptionalIntPipe) before: number | undefined, 
     @Query('after', ParseOptionalIntPipe) after: number | undefined, 
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
     @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number
-  ): Promise<TransactionDetailed[]> {
+  ): Promise<Transaction[]> {
     return this.transactionService.getTransactions({
         sender, 
         receiver, 
         senderShard, 
         receiverShard, 
         miniBlockHash,
+        status,
         condition,
         before,
         after,
@@ -63,6 +67,7 @@ export class TransactionController {
   @ApiQuery({ name: 'senderShard', description: 'Id of the shard the sender address belongs to', required: false  })
   @ApiQuery({ name: 'receiverShard', description: 'Id of the shard the receiver address belongs to', required: false  })
   @ApiQuery({ name: 'miniBlockHash', description: 'Filter by miniblock hash', required: false  })
+  @ApiQuery({ name: 'status', description: 'Status of the transaction (success / pending / invalid)', required: false  })
   @ApiQuery({ name: 'condition', description: 'Condition type (should/must)', required: false  })
   @ApiQuery({ name: 'before', description: 'Before timestamp', required: false })
   @ApiQuery({ name: 'after', description: 'After timestamp', required: false })
@@ -74,6 +79,7 @@ export class TransactionController {
     @Query('senderShard', ParseOptionalIntPipe) senderShard: number | undefined, 
     @Query('receiverShard', ParseOptionalIntPipe) receiverShard: number | undefined, 
     @Query('miniBlockHash') miniBlockHash: string | undefined, 
+    @Query('status', new ParseOptionalEnumPipe(TransactionStatus)) status: TransactionStatus | undefined, 
     @Query('condition', new ParseOptionalEnumPipe(QueryCondition)) condition: QueryCondition | undefined, 
     @Query('before', ParseOptionalIntPipe) before: number | undefined, 
     @Query('after', ParseOptionalIntPipe) after: number | undefined, 
@@ -86,12 +92,43 @@ export class TransactionController {
       senderShard, 
       receiverShard, 
       miniBlockHash,
+      status,
       condition,
       before,
       after,
       from, 
       size
-  });  
+    });  
+  }
+
+  @Get("/transactions/c")
+  @ApiExcludeEndpoint()
+  getTransactionCountAlternative(
+    @Query('sender') sender: string | undefined, 
+    @Query('receiver') receiver: string | undefined, 
+    @Query('senderShard', ParseOptionalIntPipe) senderShard: number | undefined, 
+    @Query('receiverShard', ParseOptionalIntPipe) receiverShard: number | undefined, 
+    @Query('miniBlockHash') miniBlockHash: string | undefined, 
+    @Query('status', new ParseOptionalEnumPipe(TransactionStatus)) status: TransactionStatus | undefined, 
+    @Query('condition', new ParseOptionalEnumPipe(QueryCondition)) condition: QueryCondition | undefined, 
+    @Query('before', ParseOptionalIntPipe) before: number | undefined, 
+    @Query('after', ParseOptionalIntPipe) after: number | undefined, 
+    @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
+    @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number
+  ): Promise<number> {
+    return this.transactionService.getTransactionCount({
+      sender, 
+      receiver, 
+      senderShard, 
+      receiverShard, 
+      miniBlockHash,
+      status,
+      condition,
+      before,
+      after,
+      from, 
+      size
+    });  
   }
 
   @Get('/transactions/:txHash')

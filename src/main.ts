@@ -34,24 +34,30 @@ async function bootstrap() {
   let metricsService = publicApp.get<MetricsService>(MetricsService);
   let tokenAssetService = publicApp.get<TokenAssetService>(TokenAssetService);
 
+  httpAdapterHostService.httpAdapter.getHttpServer().keepAliveTimeout = apiConfigService.getServerTimeout();
+
   await tokenAssetService.checkout();
 
   publicApp.useGlobalInterceptors(
-    new LoggingInterceptor(metricsService, httpAdapterHostService), 
+    new LoggingInterceptor(metricsService), 
     new CachingInterceptor(cachingService, httpAdapterHostService, metricsService),
     new FieldsInterceptor()
   );
   const description = readFileSync(join(__dirname, '..', 'docs', 'swagger.md'), 'utf8');
 
-  const config = new DocumentBuilder()
+  let documentBuilder = new DocumentBuilder()
     .setTitle('Elrond API')
     .setDescription(description)
     .setVersion('1.0.0')
-    .addServer('https://beta-api.elrond.com')
-    .addServer('https://devnet-beta-api.elrond.com')
-    .addServer('https://testnet-beta-api.elrond.com')
-    .setExternalDoc('Elrond Docs', 'https://docs.elrond.com')
-    .build();
+    .setExternalDoc('Elrond Docs', 'https://docs.elrond.com');
+
+
+  let apiUrls = apiConfigService.getApiUrls();
+  for (let apiUrl of apiUrls) {
+    documentBuilder = documentBuilder.addServer(apiUrl);
+  }
+
+  const config = documentBuilder.build();
 
   const document = SwaggerModule.createDocument(publicApp, config);
   SwaggerModule.setup('docs', publicApp, document);

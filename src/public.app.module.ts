@@ -48,6 +48,11 @@ import { WinstonModule } from 'nest-winston';
 import * as winston from 'winston';
 import { ProxyController } from './endpoints/proxy/proxy.controller';
 import { TokenAssetService } from './helpers/token.asset.service';
+import { DataApiService } from './helpers/data.api.service';
+import { KeysController } from './endpoints/keys/keys.controller';
+import { KeysService } from './endpoints/keys/keys.service';
+import { WaitingListController } from './endpoints/waiting-list/waiting.list.controller';
+import { WaitingListService } from './endpoints/waiting-list/waiting.list.service';
 const DailyRotateFile = require('winston-daily-rotate-file');
 
 @Module({
@@ -79,6 +84,7 @@ const DailyRotateFile = require('winston-daily-rotate-file');
     MiniBlockController, RoundController, NodeController, ProviderController,
     AccessController, DelegationLegacyController, StakeController, DelegationController,
     VmQueryController, ShardController, IdentitiesController, ProxyController,
+    KeysController, WaitingListController
   ],
   providers: [
     NetworkService, ApiConfigService, AccountService, ElasticService, GatewayService, TransactionService, 
@@ -86,11 +92,11 @@ const DailyRotateFile = require('winston-daily-rotate-file');
     CachingService, KeybaseService, ProviderService,
     StakeService, LoggingInterceptor, ApiService, ProfilerService, AccessService, DelegationLegacyService,
     DelegationService, CacheConfigService, CachingInterceptor, ShardService, MetricsService, IdentitiesService,
-    TokenAssetService,
+    TokenAssetService, DataApiService, KeysService, WaitingListService
   ],
   exports: [
     ApiConfigService, RoundService, CachingService, TransactionService, GatewayService, MetricsService, NodeService,
-    TokenService, ShardService, 
+    TokenService, ShardService, IdentitiesService, ProviderService
   ]
 })
 export class PublicAppModule {}

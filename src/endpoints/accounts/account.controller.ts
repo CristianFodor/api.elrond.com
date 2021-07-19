@@ -1,5 +1,5 @@
 import { Controller, DefaultValuePipe, Get, HttpException, HttpStatus, Logger, Param, ParseIntPipe, Query } from '@nestjs/common';
-import { ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiQuery, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AccountService } from './account.service';
 import { AccountDetailed } from './entities/account.detailed';
 import { Account } from './entities/account';
@@ -9,7 +9,13 @@ import { TokenWithBalance } from '../tokens/entities/token.with.balance';
 import { DelegationLegacyService } from '../delegation.legacy/delegation.legacy.service';
 import { AccountDelegationLegacy } from '../delegation.legacy/entities/account.delegation.legacy';
 import { AccountKey } from './entities/account.key';
-import { NftElasticAccount } from '../tokens/entities/nft.elastic.account';
+import { NftAccount } from '../tokens/entities/nft.account';
+import { ParseOptionalEnumPipe } from 'src/helpers/pipes/parse.optional.enum.pipe';
+import { NftType } from '../tokens/entities/nft.type';
+import { ParseOptionalBoolPipe } from 'src/helpers/pipes/parse.optional.bool.pipe';
+import { WaitingList } from '../waiting-list/entities/waiting.list';
+import { WaitingListService } from '../waiting-list/waiting.list.service';
+import { NftCollection } from '../tokens/entities/nft.collection';
 
 @Controller()
 @ApiTags('accounts')
@@ -19,7 +25,8 @@ export class AccountController {
   constructor(
     private readonly accountService: AccountService,
     private readonly tokenService: TokenService,
-    private readonly delegationLegacyService: DelegationLegacyService
+    private readonly delegationLegacyService: DelegationLegacyService,
+    private readonly waitingListService: WaitingListService,
   ) {
     this.logger = new Logger(AccountController.name);
   }
@@ -37,7 +44,7 @@ export class AccountController {
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
     @Query("size", new DefaultValuePipe(25), ParseIntPipe) size: number
   ): Promise<Account[]> {
-    return this.accountService.getAccounts(from, size);
+    return this.accountService.getAccounts({from, size});
   }
 
   @Get("/accounts/count")
@@ -46,6 +53,12 @@ export class AccountController {
     description: 'The number of accounts available on the blockchain',
   })
   async getAccountsCount(): Promise<number> {
+    return await this.accountService.getAccountsCount();
+  }
+
+  @Get("/accounts/c")
+  @ApiExcludeEndpoint()
+  async getAccountsCountAlternative(): Promise<number> {
     return await this.accountService.getAccountsCount();
   }
 
@@ -80,7 +93,8 @@ export class AccountController {
   async getAccountDeferred(@Param('address') address: string): Promise<AccountDeferred[]> {
     try {
       return await this.accountService.getDeferredAccount(address);
-    } catch {
+    } catch(error) {
+      this.logger.error(error);
       throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
     }
   }
@@ -104,7 +118,7 @@ export class AccountController {
     @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number
   ): Promise<TokenWithBalance[]> {
     try {
-      return await this.tokenService.getTokensForAddress(address, from, size);
+      return await this.tokenService.getTokensForAddress(address, { from, size });
     } catch (error) {
       this.logger.error(error);
       // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
@@ -124,6 +138,76 @@ export class AccountController {
   async getTokenCount(@Param('address') address: string): Promise<number> {
     try {
       return await this.tokenService.getTokenCountForAddress(address);
+    } catch (error) {
+      this.logger.error(error);
+      // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+      return 0;
+    }
+  }
+
+  @Get("/accounts/:address/tokens/c")
+  @ApiExcludeEndpoint()
+  async getTokenCountAlternative(@Param('address') address: string): Promise<number> {
+    try {
+      return await this.tokenService.getTokenCountForAddress(address);
+    } catch (error) {
+      this.logger.error(error);
+      // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+      return 0;
+    }
+  }
+
+  @Get("/accounts/:address/collections")
+  @ApiQuery({ name: 'from', description: 'Numer of items to skip for the result set', required: false })
+  @ApiQuery({ name: 'size', description: 'Number of items to retrieve', required: false  })
+  @ApiResponse({
+    status: 200,
+    description: 'The token collections of a given account',
+    type: NftCollection,
+    isArray: true
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Account not found'
+  })
+  async getAccountCollections(
+    @Param('address') address: string,
+    @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
+    @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number
+  ): Promise<NftCollection[]> {
+    try {
+      return await this.tokenService.getCollectionsForAddress(address, { from, size });
+    } catch (error) {
+      this.logger.error(error);
+      // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+      return [];
+    }
+  }
+
+  @Get("/accounts/:address/collections/count")
+  @ApiResponse({
+    status: 200,
+    description: 'The number of token collections available on the blockchain for the given address',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Account not found'
+  })
+  async getCollectionCount(@Param('address') address: string): Promise<number> {
+    try {
+      return await this.tokenService.getCollectionCountForAddress(address);
+    } catch (error) {
+      this.logger.error(error);
+      // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+      return 0;
+    }
+  }
+
+  @Get("/accounts/:address/collections/c")
+  @ApiExcludeEndpoint()
+  async getCollectionCountAlternative(@Param('address') address: string): Promise<number> {
+    try {
+      return await this.tokenService.getCollectionCountForAddress(address);
     } catch (error) {
       this.logger.error(error);
       // throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
@@ -160,11 +244,16 @@ export class AccountController {
   @Get("/accounts/:address/nfts")
   @ApiQuery({ name: 'from', description: 'Numer of items to skip for the result set', required: false })
   @ApiQuery({ name: 'size', description: 'Number of items to retrieve', required: false  })
-  @ApiQuery({ name: 'token', description: 'Filter by token identifier', required: false  })
+	@ApiQuery({ name: 'search', description: 'Search by token name', required: false })
+	@ApiQuery({ name: 'type', description: 'Filter by type (NonFungibleESDT/SemiFungibleESDT)', required: false })
+	@ApiQuery({ name: 'collection', description: 'Get all tokens by token collection', required: false })
+	@ApiQuery({ name: 'tags', description: 'Filter by one or more comma-separated tags', required: false })
+	@ApiQuery({ name: 'creator', description: 'Return all NFTs associated with a given creator', required: false })
+	@ApiQuery({ name: 'hasUris', description: 'Return all NFTs that have one or more uris', required: false })
   @ApiResponse({
     status: 200,
     description: 'The non-fungible and semi-fungible tokens of a given account',
-    type: NftElasticAccount,
+    type: NftAccount,
     isArray: true
   })
   @ApiResponse({
@@ -175,10 +264,15 @@ export class AccountController {
     @Param('address') address: string,
     @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
     @Query('size', new DefaultValuePipe(25), ParseIntPipe) size: number,
-    @Query('token') token: string | undefined
-  ): Promise<NftElasticAccount[]> {
+		@Query('search') search: string | undefined,
+		@Query('type', new ParseOptionalEnumPipe(NftType)) type: NftType | undefined,
+		@Query('collection') collection: string | undefined,
+		@Query('tags') tags: string | undefined,
+		@Query('creator') creator: string | undefined,
+		@Query('hasUris', new ParseOptionalBoolPipe) hasUris: boolean | undefined,
+  ): Promise<NftAccount[]> {
     try {
-      return await this.tokenService.getNftsForAddress(address, from, size, token);
+      return await this.tokenService.getNftsForAddress(address, { from, size }, { search, type, collection, tags, creator, hasUris });
     } catch (error) {
       this.logger.error(error);
       return [];
@@ -186,6 +280,12 @@ export class AccountController {
   }
 
   @Get("/accounts/:address/nfts/count")
+	@ApiQuery({ name: 'search', description: 'Search by token name', required: false })
+	@ApiQuery({ name: 'type', description: 'Filter by type (NonFungibleESDT/SemiFungibleESDT)', required: false })
+	@ApiQuery({ name: 'collection', description: 'Get all tokens by token collection', required: false })
+	@ApiQuery({ name: 'tags', description: 'Filter by one or more comma-separated tags', required: false })
+	@ApiQuery({ name: 'creator', description: 'Return all NFTs associated with a given creator', required: false })
+	@ApiQuery({ name: 'hasUris', description: 'Return all NFTs that have one or more uris', required: false })
   @ApiResponse({
     status: 200,
     description: 'The number of non-fungible and semi-fungible tokens available on the blockchain for the given address',
@@ -194,9 +294,36 @@ export class AccountController {
     status: 404,
     description: 'Account not found'
   })
-  async getNftCount(@Param('address') address: string): Promise<number> {
+  async getNftCount(
+    @Param('address') address: string,
+		@Query('search') search: string | undefined,
+		@Query('type', new ParseOptionalEnumPipe(NftType)) type: NftType | undefined,
+		@Query('collection') collection: string | undefined,
+		@Query('tags') tags: string | undefined,
+		@Query('creator') creator: string | undefined,
+		@Query('hasUris', new ParseOptionalBoolPipe) hasUris: boolean | undefined,
+    ): Promise<number> {
     try {
-      return await this.tokenService.getNftCountForAddress(address);
+      return await this.tokenService.getNftCountForAddress(address, { search, type, collection, tags, creator, hasUris });
+    } catch (error) {
+      this.logger.error(error);
+      return 0;
+    }
+  }
+
+  @Get("/accounts/:address/nfts/c")
+  @ApiExcludeEndpoint()
+  async getNftCountAlternative(
+    @Param('address') address: string,
+		@Query('search') search: string | undefined,
+		@Query('type', new ParseOptionalEnumPipe(NftType)) type: NftType | undefined,
+		@Query('collection') collection: string | undefined,
+		@Query('tags') tags: string | undefined,
+		@Query('creator') creator: string | undefined,
+		@Query('hasUris', new ParseOptionalBoolPipe) hasUris: boolean | undefined,
+    ): Promise<number> {
+    try {
+      return await this.tokenService.getNftCountForAddress(address, { search, type, collection, tags, creator, hasUris });
     } catch (error) {
       this.logger.error(error);
       return 0;
@@ -207,7 +334,7 @@ export class AccountController {
   @ApiResponse({
     status: 200,
     description: 'A specific non-fungible or semi-fungible token of a given account',
-    type: TokenWithBalance,
+    type: NftAccount,
   })
   @ApiResponse({
     status: 404,
@@ -220,7 +347,7 @@ export class AccountController {
   async getAccountNft(
     @Param('address') address: string,
     @Param('nft') nft: string,
-  ): Promise<NftElasticAccount> {
+  ): Promise<NftAccount> {
     let result = await this.tokenService.getNftForAddress(address, nft);
     if (!result) {
       throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
@@ -284,5 +411,16 @@ export class AccountController {
       this.logger.error(error);
       throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
     }
+  }
+
+  @Get("/accounts/:address/waiting-list")
+  @ApiResponse({
+    status: 200,
+    description: 'The waiting list of a given account',
+    type: WaitingList,
+    isArray: true
+  })
+  async getAccountWaitingList(@Param('address') address: string): Promise<WaitingList[]> {
+    return await this.waitingListService.getWaitingListForAddress(address);
   }
 }

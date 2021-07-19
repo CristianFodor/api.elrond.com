@@ -8,7 +8,7 @@ import { Keybase } from "src/helpers/entities/keybase";
 import { Provider } from "src/endpoints/providers/entities/provider";
 import { ProviderConfig } from "./entities/provider.config";
 import { NodeService } from "../nodes/node.service";
-import { ProviderQuery } from "src/endpoints/providers/entities/provider.query";
+import { ProviderFilter } from "src/endpoints/providers/entities/provider.filter";
 import { PerformanceProfiler } from "src/helpers/performance.profiler";
 import { ApiService } from "src/helpers/api.service";
 
@@ -29,13 +29,13 @@ export class ProviderService {
   }
 
   async getProvider(address: string): Promise<Provider | undefined> {
-    let query = new ProviderQuery();
+    let query = new ProviderFilter();
     let providers = await this.getProviders(query);
 
     return providers.find(x => x.provider === address);
   }
 
-  async getProviders(query: ProviderQuery): Promise<Provider[]> {
+  async getProviders(query: ProviderFilter): Promise<Provider[]> {
     let providers = await this.getAllProviders();
     let nodes = await this.nodeService.getAllNodes();
 
@@ -98,6 +98,8 @@ export class ProviderService {
       // @ts-ignore
       delete provider.owner;
     });
+
+    providers = providers.filter(provider => provider.numNodes > 0 && provider.stake !== '0');
 
     return providers;
   }
@@ -285,11 +287,17 @@ export class ProviderService {
     );
   
     if (response) {
-      const [name, website, identity] = response.map((base64) =>
-        Buffer.from(base64, 'base64').toString().trim().toLowerCase()
-      );
-  
-      return { name, website, identity };
+      try {
+        const [name, website, identity] = response.map((base64) =>
+          Buffer.from(base64, 'base64').toString().trim().toLowerCase()
+        );
+    
+        return { name, website, identity };
+      } catch (error) {
+        this.logger.error(`Could not get provider metadata for address '${address}'`);
+        this.logger.error(error);
+        return { name: null, website: null, identity: null };
+      }
     }
   
     return { name: null, website: null, identity: null };

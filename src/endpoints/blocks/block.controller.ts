@@ -1,5 +1,5 @@
 import { Controller, DefaultValuePipe, Get, HttpException, HttpStatus, Param, ParseIntPipe, Query } from "@nestjs/common";
-import { ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { ApiExcludeEndpoint, ApiQuery, ApiResponse, ApiTags } from "@nestjs/swagger";
 import { ParseOptionalIntPipe as ParseOptionalIntPipe } from "src/helpers/pipes/parse.optional.int.pipe";
 import { BlockService } from "./block.service";
 import { Block } from "./entities/block";
@@ -31,7 +31,7 @@ export class BlockController {
       @Query('from', new DefaultValuePipe(0), ParseIntPipe) from: number, 
       @Query("size", new DefaultValuePipe(25), ParseIntPipe) size: number
     ): Promise<Block[]> {
-      return this.blockService.getBlocks(shard, proposer, validator, epoch, from, size);
+      return this.blockService.getBlocks({ shard, proposer, validator, epoch }, { from, size });
     }
 
     @Get("/blocks/count")
@@ -40,6 +40,12 @@ export class BlockController {
       description: 'The number of blocks available on the blockchain',
     })
     getBlocksCount(): Promise<number> {
+      return this.blockService.getBlocksCount();
+    }
+
+    @Get("/blocks/c")
+    @ApiExcludeEndpoint()
+    getBlocksCountAlternative(): Promise<number> {
       return this.blockService.getBlocksCount();
     }
 

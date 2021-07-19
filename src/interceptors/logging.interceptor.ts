@@ -1,8 +1,9 @@
 import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from "@nestjs/common";
-import { HttpAdapterHost } from "@nestjs/core";
 import { Observable } from "rxjs";
 import { tap } from 'rxjs/operators';
 import { MetricsService } from "src/endpoints/metrics/metrics.service";
+import { ProxyController } from "src/endpoints/proxy/proxy.controller";
+import { TransactionController } from "src/endpoints/transactions/transaction.controller";
 import { PerformanceProfiler } from "src/helpers/performance.profiler";
 
 @Injectable()
@@ -11,7 +12,6 @@ export class LoggingInterceptor implements NestInterceptor {
 
   constructor(
     private readonly metricsService: MetricsService,
-    private readonly httpAdapterHost: HttpAdapterHost
   ) {
     this.logger = new Logger(LoggingInterceptor.name);
   }
@@ -23,13 +23,15 @@ export class LoggingInterceptor implements NestInterceptor {
 
     const request = context.getArgByIndex(0);
 
-    const httpAdapter = this.httpAdapterHost.httpAdapter;
-    if (httpAdapter.getRequestMethod(request) !== 'GET') {
-      this.logger.verbose({
+    const isCreateTransactionCall = context.getClass().name === TransactionController.name && context.getHandler().name === 'createTransaction';
+    const isSendTransactionCall = context.getClass().name === ProxyController.name && context.getHandler().name === 'transactionSend';
+
+    if (isCreateTransactionCall || isSendTransactionCall) {
+      this.logger.log({
         apiFunction,
         body: request.body,
         userAgent: request.headers['user-agent'],
-        clientIp: request.headers['X-Real-Ip'] || request.headers['X-Forwarded-For'] || request.socket.remoteAddress
+        clientIp: request.headers['x-forwarded-for'] || request.headers['x-real-ip'] || request.socket.remoteAddress
       });
     }
 
