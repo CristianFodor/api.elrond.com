@@ -20,6 +20,7 @@ import * as bodyParser from 'body-parser';
 import * as requestIp from 'request-ip';
 import { WINSTON_MODULE_NEST_PROVIDER } from 'nest-winston';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import { CleanupInterceptor } from './interceptors/cleanup.interceptor';
 
 async function bootstrap() {
   const publicApp = await NestFactory.create<NestFastifyApplication>(PublicAppModule, new FastifyAdapter());
@@ -41,7 +42,8 @@ async function bootstrap() {
   publicApp.useGlobalInterceptors(
     new LoggingInterceptor(metricsService), 
     new CachingInterceptor(cachingService, httpAdapterHostService, metricsService),
-    new FieldsInterceptor()
+    new FieldsInterceptor(),
+    new CleanupInterceptor()
   );
   const description = readFileSync(join(__dirname, '..', 'docs', 'swagger.md'), 'utf8');
 
