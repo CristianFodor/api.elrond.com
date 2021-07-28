@@ -1,23 +1,23 @@
-network: 'devnet'
+network: 'mainnet'
 metaChainShardId: 4294967295
 api:
   public: true
   private: true
 cron:
   transactionProcessor: true
-  transactionProcessorMaxLookBehind: 100
+  transactionProcessorMaxLookBehind: 1000
   cacheWarmer: true
 urls:
   api:
+    - 'https://api.elrond.com'
     - 'https://devnet-beta-api.elrond.com'
     - 'https://testnet-beta-api.elrond.com'
-    - 'https://beta-api.elrond.com'
   elastic:
-    - 'https://search-elrond-devnet-v2-ov66nzaicqf257tba5rctuo73m.eu-central-1.es.amazonaws.com'
+    - 'http://65.21.34.160:9200'
   gateway:
-    - 'https://devnet-gateway.elrond.com'
+    - 'https://gateway.elrond.com'
   redis: '127.0.0.1'
-  providers: 'https://devnet-delegation.maiarbrowser.com/providers'
+  providers: 'https://internal-delegation-api.elrond.com/providers'
   dataLatestCompleteUrl: 'https://data.elrond.com/latestcomplete'
   dataLatestUrl: 'https://data.elrond.com/latest'
 caching:
@@ -32,5 +32,5 @@ contracts:
   auction: 'erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqplllst77y4l'
   staking: 'erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqllls0lczs7'
   delegationManager: 'erd1qqqqqqqqqqqqqqqpqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqylllslmq6y6'
-  delegation: 'erd1qqqqqqqqqqqqqpgqp699jngundfqw07d8jzkepucvpzush6k3wvqyc44rx'
+  delegation: 'erd1qqqqqqqqqqqqqpgqxwakt2g7u9atsnr03gqcgmhcv38pt7mkd94q6shuwt'
   delegationShardId: 2

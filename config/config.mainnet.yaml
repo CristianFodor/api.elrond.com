@@ -9,11 +9,11 @@ cron:
   cacheWarmer: true
 urls:
   api:
-    - 'https://beta-api.elrond.com'
+    - 'https://api.elrond.com'
     - 'https://devnet-beta-api.elrond.com'
     - 'https://testnet-beta-api.elrond.com'
   elastic:
-    - 'https://index.elrond.com'
+    - 'http://65.21.34.160:9200'
   gateway:
     - 'https://gateway.elrond.com'
   redis: '127.0.0.1'
