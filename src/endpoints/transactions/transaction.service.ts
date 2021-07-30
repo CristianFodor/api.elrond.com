@@ -47,18 +47,19 @@ export class TransactionService {
     const query = this.buildTransactionFilterQuery(transactionQuery);
 
     const pagination: ElasticPagination = {
-      from: transactionQuery.from, 
-      size: transactionQuery.size
-    }
-
-    const sort = {
-      'timestamp': 'desc',
-      'nonce': 'desc',
+      from: transactionQuery.from,
+      size: transactionQuery.size,
     };
 
-    let transactions = await this.elasticService.getList('transactions', 'txHash', query, pagination, sort, transactionQuery.condition ?? QueryCondition.must);
+    const sort = {
+      timestamp: 'desc',
+      nonce: 'desc',
+    };
 
-    return transactions.map(transaction => mergeObjects(new Transaction(), transaction));
+    const transactions = await this.elasticService.getList('transactions', 'txHash', query, pagination, sort, transactionQuery.condition ?? QueryCondition.must);
+    return transactions.map((transaction) =>
+      mergeObjects(new TransactionDetailed(), transaction),
+    );
   }
 
   async getTransaction(txHash: string): Promise<TransactionDetailed | null> {
