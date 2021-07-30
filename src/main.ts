@@ -25,7 +25,7 @@ async function bootstrap() {
   const publicApp = await NestFactory.create(PublicAppModule);
   publicApp.use(bodyParser.json({limit: '1mb'}));
   publicApp.use(requestIp.mw());
-  // publicApp.enableCors();
+  publicApp.enableCors();
   publicApp.useLogger(publicApp.get(WINSTON_MODULE_NEST_PROVIDER));
 
   let apiConfigService = publicApp.get<ApiConfigService>(ApiConfigService);
