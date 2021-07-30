@@ -1,6 +1,6 @@
 network: 'testnet'
 metaChainShardId: 4294967295
-useLegacyElastic: false
+useLegacyElastic: true
 api:
   public: true
   private: true
