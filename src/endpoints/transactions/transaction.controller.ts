@@ -139,7 +139,7 @@ export class TransactionController {
     isArray: true
   })
   @ApiResponse({
-    status: 404,
+    status: 400,
     description: 'Transaction not found'
   })
   async getTransaction(@Param('txHash') txHash: string): Promise<TransactionDetailed> {
