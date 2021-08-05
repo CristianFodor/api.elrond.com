@@ -28,7 +28,7 @@ export class IdentitiesService {
   }
 
   async getAllIdentities(): Promise<Identity[]> {
-    return this.cachingService.getOrSetCache('identities', async () => await this.getAllIdentitiesRaw(), oneMinute());
+    return this.cachingService.getOrSetCache('identities', async () => await this.getAllIdentitiesRaw(), oneMinute() * 5);
   }
 
   async getAllIdentitiesRaw(): Promise<Identity[]> {
