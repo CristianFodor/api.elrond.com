@@ -52,6 +52,25 @@ export class ProviderService {
             accumulator.locked += BigInt(current.locked);
           }
 
+          if (current && current.status) {
+            switch (current.status) {
+              case 'waiting': {
+                accumulator.numWaitingNodes += 1;
+                break;
+              }
+              case 'eligible': {
+                accumulator.numEligibleNodes += 1;
+                break;
+              }
+              case 'queued': {
+                accumulator.numQueuedNodes += 1;
+                break;
+              }
+              default: {
+                break;
+              }
+            }
+          }
           return accumulator;
         },
         {
@@ -59,21 +78,30 @@ export class ProviderService {
           stake: BigInt('0'),
           topUp: BigInt('0'),
           locked: BigInt('0'),
-        }
+          numWaitingNodes: 0,
+          numEligibleNodes: 0,
+          numQueuedNodes: 0,
+        },
       );
 
       element.numNodes = results.numNodes;
       element.stake = results.stake.toString();
       element.topUp = results.topUp.toString();
       element.locked = results.locked.toString();
+      element.numWaitingNodes = results.numWaitingNodes.toString();
+      element.numEligibleNodes = results.numEligibleNodes.toString();
+      element.numQueuedNodes = results.numQueuedNodes.toString();
+
       // element.sort =
       //   element.locked && element.locked !== '0' ? parseInt(element.locked.slice(0, -18)) : 0;
     });
-
-    let data = await this.getDelegationProviders();
+    const data = await this.getDelegationProviders();
 
     providers.forEach((provider) => {
-      const found = data.find((element: any) => element !== null && provider.provider === element.contract);
+      const found = data.find(
+        (element: any) =>
+          element !== null && provider.provider === element.contract,
+      );
 
       if (found) {
         if (found.aprValue) {
@@ -103,7 +131,6 @@ export class ProviderService {
     });
 
     providers = providers.filter(provider => provider.numNodes > 0 && provider.stake !== '0');
-
     return providers;
   }
 
@@ -179,7 +206,10 @@ export class ProviderService {
         stake: '0',
         topUp: '0',
         locked: '0',
-        featured: false
+        featured: false,
+        numWaitingNodes: 0,
+        numEligibleNodes: 0,
+        numQueuedNodes: 0,
       };
     });
 

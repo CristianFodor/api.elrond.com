@@ -39,4 +39,13 @@ export class Provider {
 
   @ApiProperty()
   locked: string = '';
+
+  @ApiProperty()
+  numWaitingNodes: number = 0;
+
+  @ApiProperty()
+  numEligibleNodes: number = 0;
+
+  @ApiProperty()
+  numQueuedNodes: number = 0;
 }
