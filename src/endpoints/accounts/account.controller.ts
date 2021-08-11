@@ -80,6 +80,24 @@ export class AccountController {
     }
   }
 
+  @Get("/accounts/herotag/:herotag")
+  @ApiResponse({
+    status: 200,
+    description: 'The details of a given account filter by herotag',
+    type: AccountDetailed,
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Account not found',
+  })
+  async getAccountDetailsByHerotag(@Param('herotag') herotag: string): Promise<AccountDetailed> {
+    try {
+      return await this.accountService.getAccountByHerotag(herotag);
+    } catch {
+      throw new HttpException('Account not found', HttpStatus.NOT_FOUND);
+    }
+  }
+
   @Get("/accounts/:address/deferred")
   @ApiResponse({
     status: 200,

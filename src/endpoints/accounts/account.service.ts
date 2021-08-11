@@ -3,7 +3,16 @@ import { ElasticService } from '../../helpers/elastic.service';
 import { GatewayService } from '../../helpers/gateway.service';
 import { AccountDetailed } from './entities/account.detailed';
 import { Account } from './entities/account';
-import { bech32Decode, bech32Encode, computeShard, mergeObjects, oneDay, oneMinute, padHex } from 'src/helpers/helpers';
+import {
+  bech32Decode,
+  bech32Encode,
+  computeShard,
+  mergeObjects,
+  oneDay,
+  oneMinute,
+  padHex,
+  bech32EncodeArray,
+} from 'src/helpers/helpers';
 import { CachingService } from 'src/helpers/caching.service';
 import { VmQueryService } from 'src/endpoints/vm.query/vm.query.service';
 import { ApiConfigService } from 'src/helpers/api.config.service';
@@ -14,6 +23,8 @@ import { ElasticSortProperty } from 'src/helpers/entities/elastic/elastic.sort.p
 import { ElasticSortOrder } from 'src/helpers/entities/elastic/elastic.sort.order';
 import { ElasticQuery } from 'src/helpers/entities/elastic/elastic.query';
 import { QueryType } from 'src/helpers/entities/elastic/query.type';
+import { Keccak } from 'sha3';
+// eslint-disable-next-line @typescript-eslint/no-var-requires
 
 @Injectable()
 export class AccountService {
@@ -23,7 +34,7 @@ export class AccountService {
     @Inject(forwardRef(() => CachingService))
     private readonly cachingService: CachingService,
     private readonly vmQueryService: VmQueryService,
-    private readonly apiConfigService: ApiConfigService
+    private readonly apiConfigService: ApiConfigService,
   ) {}
 
   async getAccountsCount(): Promise<number> {
@@ -45,6 +56,55 @@ export class AccountService {
   async getAccountCodeHashRaw(address: string): Promise<string | undefined> {
     let account = await this.getAccount(address);
     return account.codeHash;
+  }
+
+  async getAccountByHerotag(herotag: string): Promise<AccountDetailed> {
+    const h = new Keccak(256);
+    h.update(Buffer.from(herotag, 'ascii'));
+    const hash = h.digest();
+    const shardId = hash[hash.length - 1];
+
+    const listBytes = [];
+    for (let i = 0; i < 30; i++) {
+      listBytes.push(1);
+    }
+
+    listBytes.push(0);
+    listBytes.push(shardId);
+
+    for (let i = 0; i < 8; i++) {
+      listBytes.push(0);
+    }
+
+    const adrAndNonce = new Keccak(256);
+    const base = adrAndNonce.update(Buffer.from(listBytes)).digest();
+
+    const prefixMask = [];
+    for (let i = 0; i < 8; i++) {
+      prefixMask.push(0);
+    }
+
+    prefixMask.push(5);
+    prefixMask.push(0);
+    for (let i = 0; i < 10; i++) {
+      base[i] = prefixMask[i];
+    }
+
+    const sufixMask = [0, shardId];
+    base[30] = sufixMask[0];
+    base[31] = sufixMask[1];
+
+    const dnsAddress = bech32EncodeArray(base);
+    const [addressFinal] = await Promise.all([
+         this.vmQueryService.vmQuery(
+            dnsAddress,
+            'resolve',
+            undefined,
+            [ Buffer.from(herotag, "ascii").toString('hex') ])]
+    );
+
+    const publicKey = bech32EncodeArray(Buffer.from(addressFinal[0], 'base64'));
+    return this.getAccount(publicKey);
   }
 
   async getAccount(address: string): Promise<AccountDetailed> {

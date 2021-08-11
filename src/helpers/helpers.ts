@@ -19,6 +19,11 @@ export function roundToEpoch(round: number): number {
   return Math.floor(round / 14401);
 }
 
+export function bech32EncodeArray(array: Buffer) {
+  const words = bech32.toWords(array);
+  return bech32.encode('erd', words);
+};
+
 export function bech32Encode(publicKey: string) {
   const words = bech32.toWords(Buffer.from(publicKey, 'hex'));
   return bech32.encode('erd', words);
