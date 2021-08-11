@@ -34,6 +34,15 @@ export class CacheWarmerService {
     }, true);
   }
 
+  @Cron('30 17 * * *')
+  async handleEndOfEpochNodeInvalidations() {
+    await lock('Nodes invalidations', async () => {
+      let nodes = await this.nodeService.getAllNodesRaw();
+      await this.cachingService.setCache('nodes', nodes, oneHour());
+      await this.deleteCacheKey('nodes');
+    }, true);
+  }
+
   @Cron('* * * * *')
   async handleTokenInvalidations() {
     await lock('Tokens invalidations', async () => {
