@@ -42,6 +42,29 @@ export class AccountService {
     return account.codeHash;
   }
 
+  async getAccountByHerotag(herotag: string): Promise<AccountDetailed> {
+    // let query = {
+    //   sender: address,
+    //   receiver: address
+    // };
+    //
+    // const [
+    //   txCount,
+    //   {
+    //     account: { nonce, balance, code, codeHash, rootHash, username },
+    //   },
+    // ] = await Promise.all([
+    //   this.elasticService.getCount('transactions', query, 'should'),
+    //   this.gatewayService.get(`address/${address}`)
+    // ]);
+    // const test = this.elasticService.getCount('transactions', query, 'should');
+    // console.log(test);
+    //
+    // let result = { address, nonce, balance, code, codeHash, rootHash, txCount, username };
+
+    return result;
+  }
+
   async getAccount(address: string): Promise<AccountDetailed> {
     let query = {
       sender: address,
@@ -51,14 +74,16 @@ export class AccountService {
     const [
       txCount,
       {
-        account: { nonce, balance, code, codeHash, rootHash },
+        account: { nonce, balance, code, codeHash, rootHash, username },
       },
     ] = await Promise.all([
       this.elasticService.getCount('transactions', query, 'should'),
       this.gatewayService.get(`address/${address}`)
     ]);
+    const test = this.elasticService.getCount('transactions', query, 'should');
+    console.log(test);
 
-    let result = { address, nonce, balance, code, codeHash, rootHash, txCount };
+    let result = { address, nonce, balance, code, codeHash, rootHash, txCount, username };
 
     return result;
   }
@@ -75,7 +100,7 @@ export class AccountService {
     const query = {};
 
     let result = await this.elasticService.getList('accounts', 'address', query, pagination, sort);
-
+    console.log(result);
     return result.map(item => mergeObjects(new Account(), item));
   }
 
