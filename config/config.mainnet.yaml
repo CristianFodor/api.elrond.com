@@ -11,13 +11,9 @@ cron:
 urls:
   api:
     - 'https://api.elrond.com'
-<<<<<<< HEAD
-    - 'https://devnet-beta-api.elrond.com'
-    - 'https://testnet-beta-api.elrond.com'
-=======
+    - 'https://api.elrondscan.com'
     - 'https://devnet-api.elrond.com'
     - 'https://testnet-api.elrond.com'
->>>>>>> eab6fd3dbb6c7678c805fb38c7e848fe8eeaca02
   elastic:
     - 'http://65.21.34.160:9200'
   gateway:
